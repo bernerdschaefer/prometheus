@@ -32,8 +32,9 @@ import (
 
 // Commandline flags.
 var (
-	configFile         = flag.String("configFile", "prometheus.conf", "Prometheus configuration file name.")
-	metricsStoragePath = flag.String("metricsStoragePath", "/tmp/metrics", "Base path for metrics storage.")
+	configFile             = flag.String("configFile", "prometheus.conf", "Prometheus configuration file name.")
+	metricsStoragePath     = flag.String("metricsStoragePath", "/tmp/metrics", "Base path for metrics storage.")
+	scrapeRequestAllowance = flag.Int("scrapeRequestAllowance", 10, "Maximum number of parallel target scrapes.")
 )
 
 func main() {
@@ -61,7 +62,7 @@ func main() {
 
 	scrapeResults := make(chan format.Result, 4096)
 
-	targetManager := retrieval.NewTargetManager(scrapeResults, 1)
+	targetManager := retrieval.NewTargetManager(scrapeResults, *scrapeRequestAllowance)
 	targetManager.AddTargetsFromConfig(conf)
 
 	ruleResults := make(chan *rules.Result, 4096)
