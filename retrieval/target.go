@@ -130,6 +130,9 @@ func (t *target) Scrape(earliest time.Time, results chan format.Result) (err err
 	done := make(chan bool)
 
 	request := func() {
+		defer func() {
+			done <- true
+		}()
 		resp, err := http.Get(t.Address())
 		if err != nil {
 			return
@@ -146,8 +149,6 @@ func (t *target) Scrape(earliest time.Time, results chan format.Result) (err err
 		if err != nil {
 			return
 		}
-
-		done <- true
 	}
 
 	accumulator := func(d time.Duration) {
