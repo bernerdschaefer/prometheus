@@ -1,12 +1,10 @@
 language: go
 
 before_script:
-- gvm install go1.0.3 || true
-- gvm use go1.0.3 || true
+  - echo "Starting"
+  - gvm install go1.0.3
+  - gvm use go1.0.3
 
 script:
- - echo ${PATH}
- - echo $(which true)
- - make clean
- - make -d -f Makefile.TRAVIS
+  - echo "Done"
 
