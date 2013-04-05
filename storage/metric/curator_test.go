@@ -55,6 +55,10 @@ type (
 		recencyThreshold time.Duration
 		groupSize        uint32
 	}
+
+	out struct {
+		curationStates []curationState
+	}
 )
 
 func (c curationState) Get() (key, value coding.Encoder) {
@@ -102,7 +106,8 @@ func (s sampleGroup) Get() (key, value coding.Encoder) {
 func TestCurator(t *testing.T) {
 	var (
 		scenarios = []struct {
-			in in
+			in  in
+			out out
 		}{
 			{
 				in: in{
@@ -485,11 +490,33 @@ func TestCurator(t *testing.T) {
 						},
 					},
 				},
+				out: out{
+					curationStates: []curationState{
+						{
+							fingerprint:      "0001-A-1-Z",
+							groupSize:        5,
+							recencyThreshold: time.Hour,
+							lastCurated:      testInstant.Add(-1 * 30 * time.Minute),
+						},
+						{
+							fingerprint:      "0002-A-2-Z",
+							groupSize:        2,
+							recencyThreshold: 30 * time.Minute,
+							lastCurated:      testInstant.Add(-1 * 90 * time.Minute),
+						},
+						{
+							fingerprint:      "0002-A-2-Z",
+							groupSize:        5,
+							recencyThreshold: time.Hour,
+							lastCurated:      testInstant.Add(-1 * 60 * time.Minute),
+						},
+					},
+				},
 			},
 		}
 	)
 
-	for _, scenario := range scenarios {
+	for i, scenario := range scenarios {
 		curatorDirectory := fixture.NewPreparer(t).Prepare("curator", fixture.NewCassetteFactory(scenario.in.curationStates))
 		defer curatorDirectory.Close()
 
@@ -519,5 +546,49 @@ func TestCurator(t *testing.T) {
 
 		c := newCurator(scenario.in.recencyThreshold, scenario.in.groupSize, curatorStates, samples, watermarkStates)
 		c.run(testInstant)
+
+		iterator := curatorStates.NewIterator(true)
+		defer iterator.Close()
+
+		for j, expected := range scenario.out.curationStates {
+			switch j {
+			case 0:
+				if !iterator.SeekToFirst() {
+					t.Fatalf("%d.%d. could not seek to beginning.", i, j)
+				}
+			default:
+				if !iterator.Next() {
+					t.Fatalf("%d.%d. could not seek to next.", i, j)
+				}
+			}
+
+			curationKeyDto := &dto.CurationKey{}
+			curationValueDto := &dto.CurationValue{}
+
+			err = proto.Unmarshal(iterator.Key(), curationKeyDto)
+			if err != nil {
+				t.Fatalf("%d.%d. could not unmarshal: %s\n", i, j, err)
+			}
+			err = proto.Unmarshal(iterator.Value(), curationValueDto)
+			if err != nil {
+				t.Fatalf("%d.%d. could not unmarshal: %s\n", i, j, err)
+			}
+
+			curationKey := model.NewCurationKeyFromDTO(curationKeyDto)
+			curationRemark := model.NewCurationRemarkFromDTO(curationValueDto)
+
+			if !curationKey.Equal(model.CurationKey{
+				Fingerprint:      model.NewFingerprintFromRowKey(expected.fingerprint),
+				MinimumGroupSize: uint32(expected.groupSize),
+				OlderThan:        expected.recencyThreshold,
+			}) {
+				t.Fatalf("%d.%d. not equal", i, j)
+			}
+			if !curationRemark.Equal(model.CurationRemark{
+				LastCompletionTimestamp: expected.lastCurated,
+			}) {
+				t.Fatalf("%d.%d. not equal", i, j)
+			}
+		}
 	}
 }

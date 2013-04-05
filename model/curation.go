@@ -30,10 +30,46 @@ func (c CurationRemark) OlderThanLimit(cutOff time.Time) bool {
 	return c.LastCompletionTimestamp.Before(cutOff)
 }
 
+// Equal answers whether the two CurationRemarks are equivalent.
+func (c CurationRemark) Equal(o CurationRemark) bool {
+	return c.LastCompletionTimestamp.Equal(o.LastCompletionTimestamp)
+}
+
 // NewCurationRemarkFromDTO builds CurationRemark from the provided
 // dto.CurationValue object.
 func NewCurationRemarkFromDTO(d *dto.CurationValue) CurationRemark {
 	return CurationRemark{
 		LastCompletionTimestamp: time.Unix(*d.LastCompletionTimestamp, 0),
+	}
+}
+
+// CurationKey provides a representation of dto.CurationKey with asociated
+// business logic methods attached to it to enhance code readability.
+type CurationKey struct {
+	Fingerprint      Fingerprint
+	OlderThan        time.Duration
+	MinimumGroupSize uint32
+}
+
+/// Equal answers whether the two CurationKeys are equivalent.
+func (c CurationKey) Equal(o CurationKey) (equal bool) {
+	switch {
+	case !c.Fingerprint.Equal(o.Fingerprint):
+		return
+	case c.OlderThan != o.OlderThan:
+		return
+	case c.MinimumGroupSize != o.MinimumGroupSize:
+		return
+	}
+
+	return true
+}
+
+// NewCurationKeyFromDTO vuilds CurationKey from the provided dto.CurationKey.
+func NewCurationKeyFromDTO(d *dto.CurationKey) CurationKey {
+	return CurationKey{
+		Fingerprint:      NewFingerprintFromDTO(d.Fingerprint),
+		OlderThan:        time.Duration(*d.OlderThan),
+		MinimumGroupSize: *d.MinimumGroupSize,
 	}
 }
