@@ -15,12 +15,18 @@ package metric
 
 import (
 	"code.google.com/p/goprotobuf/proto"
+	"fmt"
 	"github.com/prometheus/prometheus/coding"
 	"github.com/prometheus/prometheus/model"
 	dto "github.com/prometheus/prometheus/model/generated"
 	"github.com/prometheus/prometheus/storage"
 	"github.com/prometheus/prometheus/storage/raw"
+	"strings"
 	"time"
+)
+
+var (
+	_ = fmt.Sprint
 )
 
 // curator is responsible for effectuating a given curation policy across the
@@ -68,6 +74,7 @@ func (c curator) run(instant time.Time) (err error) {
 		groupSize:        c.groupingQuantity,
 		recencyThreshold: c.recencyThreshold,
 		stop:             c.stop,
+		olderThan:        instant.Add(-1 * c.recencyThreshold),
 	}
 	operator := watermarkOperator{
 		curationState:    c.curationState,
@@ -137,6 +144,11 @@ type watermarkFilter struct {
 	groupSize uint32
 	// recencyThreshold refers to the target recencyThreshold from the curator.
 	recencyThreshold time.Duration
+	// olderThan functions as the cutoff when scanning curator.samples for
+	// uncurated samples to compact.  The operator scans forward in the samples
+	// until olderThan is reached and then stops operation for samples that occur
+	// after it.
+	olderThan time.Time
 }
 
 func (w watermarkFilter) shouldStop() bool {
@@ -144,6 +156,21 @@ func (w watermarkFilter) shouldStop() bool {
 }
 
 func (w watermarkFilter) Filter(key, value interface{}) (result storage.FilterResult) {
+	defer func() {
+		labels := map[string]string{
+			"group_size":        fmt.Sprint(w.groupSize),
+			"recency_threshold": fmt.Sprint(w.recencyThreshold),
+			"result":            strings.ToLower(result.String()),
+		}
+
+		curationFilterOperations.Increment(labels)
+	}()
+
+	if w.shouldStop() {
+		result = storage.STOP
+		return
+	}
+
 	fingerprint := key.(model.Fingerprint)
 	watermark := value.(model.Watermark)
 	curationKey := &dto.CurationKey{
@@ -163,25 +190,32 @@ func (w watermarkFilter) Filter(key, value interface{}) (result storage.FilterRe
 		panic(err)
 	}
 
-	switch {
-	case w.shouldStop():
-		result = storage.STOP
-		return
-	case !model.NewCurationRemarkFromDTO(curationValue).OlderThanLimit(watermark.Time):
+	curationRemark := model.NewCurationRemarkFromDTO(curationValue)
+
+	// If the curationRemark is newer than the cutoff, simply skip it.
+	if !curationRemark.OlderThan(w.olderThan) {
 		result = storage.SKIP
 		return
 	}
 
-	curationConsistent, queryErr := w.curationConsistent(fingerprint, watermark)
-	if queryErr != nil {
-		err = storage.OperatorError{queryErr, false}
+	if !curationRemark.OlderThan(watermark.Time) {
 		result = storage.SKIP
 		return
 	}
+
+	curationConsistent, err := w.curationConsistent(fingerprint, watermark)
+	if err != nil {
+		panic(err)
+	}
+
 	if curationConsistent {
 		result = storage.SKIP
 		return
 	}
+
+	result = storage.ACCEPT
+
+	fmt.Println(result, curationKey)
 
 	return
 }
@@ -210,7 +244,23 @@ type watermarkOperator struct {
 	curationState raw.Persistence
 }
 
-func (w watermarkOperator) Operate(key, value interface{}) (err *storage.OperatorError) {
+func (w watermarkOperator) Operate(key, _ interface{}) (err *storage.OperatorError) {
+	curationKey := &dto.CurationKey{
+		Fingerprint:      key.(model.Fingerprint).ToDTO(),
+		OlderThan:        proto.Int64(int64(w.recencyThreshold)),
+		MinimumGroupSize: proto.Uint32(w.groupSize),
+	}
+	curationValue := &dto.CurationValue{
+		LastCompletionTimestamp: proto.Int64(int64(w.olderThan.Unix())),
+	}
+
+	fmt.Println(w.recencyThreshold, curationKey, curationValue)
+
+	e := w.curationState.Put(coding.NewProtocolBuffer(curationKey), coding.NewProtocolBuffer(curationValue))
+	if e != nil {
+		panic(e)
+	}
+
 	return
 }
 
@@ -231,17 +281,14 @@ func (w watermarkOperator) hasBeenCurated(f model.Fingerprint) (curated bool, er
 // curationConsistent determines whether the given metric is in a dirty state
 // and needs curation.
 func (w watermarkFilter) curationConsistent(f model.Fingerprint, watermark model.Watermark) (consistent bool, err error) {
-	var (
-		rawValue      []byte
-		curationValue = &dto.CurationValue{}
-		curationKey   = &dto.CurationKey{
-			Fingerprint:      f.ToDTO(),
-			OlderThan:        proto.Int64(int64(w.recencyThreshold)),
-			MinimumGroupSize: proto.Uint32(w.groupSize),
-		}
-	)
+	curationValue := &dto.CurationValue{}
+	curationKey := &dto.CurationKey{
+		Fingerprint:      f.ToDTO(),
+		OlderThan:        proto.Int64(int64(w.recencyThreshold)),
+		MinimumGroupSize: proto.Uint32(w.groupSize),
+	}
 
-	rawValue, err = w.curationState.Get(coding.NewProtocolBuffer(curationKey))
+	rawValue, err := w.curationState.Get(coding.NewProtocolBuffer(curationKey))
 	if err != nil {
 		return
 	}
@@ -252,7 +299,7 @@ func (w watermarkFilter) curationConsistent(f model.Fingerprint, watermark model
 	}
 
 	curationRemark := model.NewCurationRemarkFromDTO(curationValue)
-	if !curationRemark.OlderThanLimit(watermark.Time) {
+	if !curationRemark.OlderThan(watermark.Time) {
 		consistent = true
 	}
 

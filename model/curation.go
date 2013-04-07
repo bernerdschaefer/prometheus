@@ -14,8 +14,13 @@
 package model
 
 import (
+	"fmt"
 	dto "github.com/prometheus/prometheus/model/generated"
 	"time"
+)
+
+var (
+	_ = fmt.Sprintf
 )
 
 // CurationRemark provides a representation of dto.CurationValue with associated
@@ -26,12 +31,13 @@ type CurationRemark struct {
 
 // OlderThanLimit answers whether this CurationRemark is older than the provided
 // cutOff time.
-func (c CurationRemark) OlderThanLimit(cutOff time.Time) bool {
+func (c CurationRemark) OlderThan(cutOff time.Time) bool {
 	return c.LastCompletionTimestamp.Before(cutOff)
 }
 
 // Equal answers whether the two CurationRemarks are equivalent.
 func (c CurationRemark) Equal(o CurationRemark) bool {
+	fmt.Println(c, o)
 	return c.LastCompletionTimestamp.Equal(o.LastCompletionTimestamp)
 }
 
