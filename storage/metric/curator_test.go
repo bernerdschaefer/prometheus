@@ -58,6 +58,7 @@ type (
 
 	out struct {
 		curationStates []curationState
+		sampleGroups   []sampleGroup
 	}
 )
 
@@ -511,6 +512,256 @@ func TestCurator(t *testing.T) {
 							lastCurated:      testInstant.Add(-1 * 60 * time.Minute),
 						},
 					},
+					sampleGroups: []sampleGroup{
+						{
+							fingerprint: "0001-A-1-Z",
+							values: []sample{
+								{
+									time:  testInstant.Add(-1 * 90 * time.Minute),
+									value: 0,
+								},
+								{
+									time:  testInstant.Add(-1 * 85 * time.Minute),
+									value: 1,
+								},
+								{
+									time:  testInstant.Add(-1 * 80 * time.Minute),
+									value: 2,
+								},
+								{
+									time:  testInstant.Add(-1 * 75 * time.Minute),
+									value: 3,
+								},
+								{
+									time:  testInstant.Add(-1 * 70 * time.Minute),
+									value: 4,
+								},
+							},
+						},
+						{
+							fingerprint: "0001-A-1-Z",
+							values: []sample{
+								{
+									time:  testInstant.Add(-1 * 65 * time.Minute),
+									value: 0,
+								},
+								{
+									time:  testInstant.Add(-1 * 60 * time.Minute),
+									value: 1,
+								},
+								{
+									time:  testInstant.Add(-1 * 55 * time.Minute),
+									value: 2,
+								},
+								{
+									time:  testInstant.Add(-1 * 50 * time.Minute),
+									value: 3,
+								},
+								{
+									time:  testInstant.Add(-1 * 45 * time.Minute),
+									value: 4,
+								},
+							},
+						},
+						{
+							fingerprint: "0001-A-1-Z",
+							values: []sample{
+								{
+									time:  testInstant.Add(-1 * 40 * time.Minute),
+									value: 0,
+								},
+								{
+									time:  testInstant.Add(-1 * 35 * time.Minute),
+									value: 1,
+								},
+								{
+									time:  testInstant.Add(-1 * 30 * time.Minute),
+									value: 2,
+								},
+							},
+						},
+						{
+							fingerprint: "0001-A-1-Z",
+							values: []sample{
+								{
+									time:  testInstant.Add(-1 * 25 * time.Minute),
+									value: 0,
+								},
+							},
+						},
+						{
+							fingerprint: "0001-A-1-Z",
+							values: []sample{
+								{
+									time:  testInstant.Add(-1 * 35 * time.Minute),
+									value: 1,
+								},
+							},
+						},
+						{
+							fingerprint: "0001-A-1-Z",
+							values: []sample{
+								{
+									time:  testInstant.Add(-1 * 30 * time.Minute),
+									value: 2,
+								},
+							},
+						},
+						{
+							fingerprint: "0002-A-2-Z",
+							values: []sample{
+								{
+									time:  testInstant.Add(-1 * 90 * time.Minute),
+									value: 0,
+								},
+								{
+									time:  testInstant.Add(-1 * 89 * time.Minute),
+									value: 1,
+								},
+								{
+									time:  testInstant.Add(-1 * 88 * time.Minute),
+									value: 2,
+								},
+								{
+									time:  testInstant.Add(-1 * 87 * time.Minute),
+									value: 3,
+								},
+								{
+									time:  testInstant.Add(-1 * 86 * time.Minute),
+									value: 4,
+								},
+							},
+						},
+						{
+							fingerprint: "0002-A-2-Z",
+							values: []sample{
+								{
+									time:  testInstant.Add(-1 * 85 * time.Minute),
+									value: 5,
+								},
+								{
+									time:  testInstant.Add(-1 * 84 * time.Minute),
+									value: 6,
+								},
+								{
+									time:  testInstant.Add(-1 * 83 * time.Minute),
+									value: 7,
+								},
+								{
+									time:  testInstant.Add(-1 * 82 * time.Minute),
+									value: 8,
+								},
+								{
+									time:  testInstant.Add(-1 * 81 * time.Minute),
+									value: 9,
+								},
+							},
+						},
+						{
+							fingerprint: "0002-A-2-Z",
+							values: []sample{
+								{
+									time:  testInstant.Add(-1 * 80 * time.Minute),
+									value: 10,
+								},
+								{
+									time:  testInstant.Add(-1 * 79 * time.Minute),
+									value: 11,
+								},
+								{
+									time:  testInstant.Add(-1 * 78 * time.Minute),
+									value: 12,
+								},
+								{
+									time:  testInstant.Add(-1 * 77 * time.Minute),
+									value: 13,
+								},
+								{
+									time:  testInstant.Add(-1 * 76 * time.Minute),
+									value: 14,
+								},
+							},
+						},
+						{
+							fingerprint: "0002-A-2-Z",
+							values: []sample{
+								{
+									time:  testInstant.Add(-1 * 75 * time.Minute),
+									value: 15,
+								},
+								{
+									time:  testInstant.Add(-1 * 74 * time.Minute),
+									value: 16,
+								},
+								{
+									time:  testInstant.Add(-1 * 73 * time.Minute),
+									value: 17,
+								},
+								{
+									time:  testInstant.Add(-1 * 72 * time.Minute),
+									value: 18,
+								},
+								{
+									time:  testInstant.Add(-1 * 71 * time.Minute),
+									value: 19,
+								},
+								{
+									time:  testInstant.Add(-1 * 70 * time.Minute),
+									value: 20,
+								},
+							},
+						},
+						{
+							fingerprint: "0002-A-2-Z",
+							values: []sample{
+								{
+									time:  testInstant.Add(-1 * 69 * time.Minute),
+									value: 21,
+								},
+								{
+									time:  testInstant.Add(-1 * 68 * time.Minute),
+									value: 22,
+								},
+								{
+									time:  testInstant.Add(-1 * 67 * time.Minute),
+									value: 23,
+								},
+								{
+									time:  testInstant.Add(-1 * 66 * time.Minute),
+									value: 24,
+								},
+								{
+									time:  testInstant.Add(-1 * 65 * time.Minute),
+									value: 25,
+								},
+							},
+						},
+						{
+							fingerprint: "0002-A-2-Z",
+							values: []sample{
+								{
+									time:  testInstant.Add(-1 * 64 * time.Minute),
+									value: 26,
+								},
+								{
+									time:  testInstant.Add(-1 * 63 * time.Minute),
+									value: 27,
+								},
+								{
+									time:  testInstant.Add(-1 * 62 * time.Minute),
+									value: 28,
+								},
+								{
+									time:  testInstant.Add(-1 * 61 * time.Minute),
+									value: 29,
+								},
+								{
+									time:  testInstant.Add(-1 * 60 * time.Minute),
+									value: 30,
+								},
+							},
+						},
+					},
 				},
 			},
 		}
@@ -588,6 +839,42 @@ func TestCurator(t *testing.T) {
 				LastCompletionTimestamp: expected.lastCurated,
 			}) {
 				t.Fatalf("%d.%d. not equal", i, j)
+			}
+		}
+
+		iterator = samples.NewIterator(true)
+		defer iterator.Close()
+
+		for j, expected := range scenario.out.sampleGroups {
+			switch j {
+			case 0:
+				if !iterator.SeekToFirst() {
+					t.Fatalf("%d.%d. could not seek to beginning.", i, j)
+				}
+			default:
+				if !iterator.Next() {
+					t.Fatalf("%d.%d. could not seek to next.", i, j)
+				}
+			}
+
+			sampleKeyDto := &dto.SampleKey{}
+			sampleValueDto := &dto.SampleValueSeries{}
+
+			err = proto.Unmarshal(iterator.Key(), sampleKeyDto)
+			if err != nil {
+				t.Fatalf("%d.%d. could not unmarshal: %s\n", i, j, err)
+			}
+			err = proto.Unmarshal(iterator.Value(), sampleValueDto)
+			if err != nil {
+				t.Fatalf("%d.%d. could not unmarshal: %s\n", i, j, err)
+			}
+
+			if !model.NewFingerprintFromRowKey(expected.fingerprint).Equal(model.NewFingerprintFromDTO(sampleKeyDto.Fingerprint)) {
+				t.Fatalf("%d.%d. expected fingerprint %s, got %s", i, j, expected.fingerprint, sampleKeyDto.Fingerprint)
+			}
+
+			if int(*sampleKeyDto.SampleCount) != len(expected.values) {
+				t.Fatalf("%d.%d. expected %d values, got %d", i, j, len(expected.values), *sampleKeyDto.SampleCount)
 			}
 		}
 	}
